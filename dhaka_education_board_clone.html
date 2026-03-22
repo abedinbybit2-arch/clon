@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>মাধ্যমিক ও উচ্চমাধ্যমিক শিক্ষা বোর্ড, ঢাকা</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&family=Noto+Sans+Bengali:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1a5276;
+    --primary-dark: #0d2f45;
+    --primary-light: #2e86c1;
+    --accent: #c0392b;
+    --accent-light: #e74c3c;
+    --gold: #d4ac0d;
+    --green: #1e8449;
+    --bg: #f4f6f9;
+    --white: #ffffff;
+    --text: #2c3e50;
+    --text-muted: #5d6d7e;
+    --border: #d5d8dc;
+    --shadow: 0 2px 12px rgba(0,0,0,0.1);
+    --shadow-hover: 0 6px 20px rgba(0,0,0,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans Bengali', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* TOP BAR */
+  .top-bar {
+    background: var(--primary-dark);
+    color: #ccd6e0;
+    font-size: 12px;
+    padding: 5px 0;
+    border-bottom: 2px solid var(--gold);
+  }
+  .top-bar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .top-bar a { color: #ccd6e0; text-decoration: none; margin: 0 6px; }
+  .top-bar a:hover { color: var(--gold); }
+  .top-bar .gov-links { display: flex; gap: 12px; }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
+    padding: 14px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(212,172,13,0.15), transparent 70%);
+    border-radius: 50%;
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .logo-wrap {
+    width: 70px; height: 70px;
+    background: var(--white);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    box-shadow: 0 0 0 3px var(--gold);
+    flex-shrink: 0;
+  }
+  .header-text h1 {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--white);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+  }
+  .header-text h2 {
+    font-size: 13px;
+    color: #aed6f1;
+    font-weight: 400;
+    margin-top: 2px;
+  }
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .btn-lang {
+    background: var(--gold);
+    color: var(--primary-dark);
+    padding: 5px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  .btn-lang:hover { background: #f0c30f; }
+
+  /* NAV */
+  nav {
+    background: var(--primary);
+    border-bottom: 3px solid var(--gold);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: stretch;
+  }
+  .nav-item {
+    position: relative;
+    color: #ecf0f1;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .nav-item:hover, .nav-item.active {
+    background: var(--primary-dark);
+    color: var(--gold);
+  }
+  .nav-item .arrow { font-size: 10px; }
+  .dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--white);
+    min-width: 220px;
+    box-shadow: var(--shadow-hover);
+    border-top: 2px solid var(--gold);
+    z-index: 200;
+  }
+  .nav-item:hover .dropdown { display: block; }
+  .dropdown a {
+    display: block;
+    padding: 9px 16px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 12.5px;
+    border-bottom: 1px solid #eee;
+    transition: background 0.15s;
+  }
+  .dropdown a:hover { background: #eaf4fb; color: var(--primary); }
+
+  /* CONTAINER */
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+
+  /* TICKER */
+  .ticker-wrap {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 7px 0;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+  .ticker-label {
+    background: var(--accent);
+    color: white;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-right: 12px;
+    border-radius: 2px;
+  }
+  .ticker-text {
+    white-space: nowrap;
+    animation: ticker 40s linear infinite;
+    font-size: 13px;
+    color: var(--text);
+  }
+  @keyframes ticker {
+    0% { transform: translateX(100vw); }
+    100% { transform: translateX(-100%); }
+  }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    padding: 20px 0;
+  }
+
+  /* OFFICER CARDS */
+  .officer-cards {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .officer-card {
+    background: var(--white);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border-left: 4px solid var(--primary);
+    transition: all 0.2s;
+  }
+  .officer-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+  .officer-avatar {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .officer-info h3 {
+    font-size: 14px; font-weight: 600; color: var(--primary-dark);
+  }
+  .officer-info p { font-size: 12px; color: var(--text-muted); }
+
+  /* SERVICE GRID */
+  .section-title {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--primary-dark);
+    padding: 10px 14px;
+    background: linear-gradient(90deg, #eaf4fb, transparent);
+    border-left: 4px solid var(--primary);
+    margin-bottom: 14px;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .service-card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 14px 10px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: var(--text);
+    border-top: 3px solid var(--primary-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .service-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    border-top-color: var(--gold);
+  }
+  .service-icon { font-size: 28px; }
+  .service-card span { font-size: 11.5px; font-weight: 500; color: var(--primary-dark); line-height: 1.4; }
+
+  /* HOTLINES */
+  .hotline-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .hotline-card {
+    background: var(--white);
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--shadow);
+    flex: 1;
+    min-width: 120px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .hotline-card:hover { box-shadow: var(--shadow-hover); }
+  .hotline-num {
+    font-size: 18px; font-weight: 700;
+    color: var(--accent);
+  }
+  .hotline-desc { font-size: 11px; color: var(--text-muted); }
+
+  /* NOTICE */
+  .notice-box {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .notice-header {
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    padding: 10px 16px;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .notice-header a { color: var(--gold); font-size: 12px; text-decoration: none; }
+  .notice-list { max-height: 280px; overflow-y: auto; }
+  .notice-item {
+    padding: 10px 16px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    transition: background 0.15s;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .notice-item:hover { background: #eaf4fb; }
+  .notice-item .bullet {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-top: 7px;
+    flex-shrink: 0;
+  }
+  .notice-item .notice-date {
+    font-size: 10px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .notice-item-text { font-size: 12.5px; line-height: 1.5; }
+  .notice-item .new-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* RESULT SECTION */
+  .result-box {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .result-header {
+    background: linear-gradient(90deg, var(--green), #27ae60);
+    padding: 10px 16px;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .result-body { padding: 16px; }
+  .result-form { display: flex; flex-direction: column; gap: 10px; }
+  .result-form select, .result-form input {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: #fafafa;
+  }
+  .result-form select:focus, .result-form input:focus {
+    outline: none; border-color: var(--primary);
+  }
+  .btn-result {
+    background: var(--green);
+    color: white;
+    border: none;
+    padding: 9px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: inherit;
+  }
+  .btn-result:hover { background: #1a7a3f; }
+
+  /* SIDEBAR */
+  .sidebar {}
+
+  .sidebar-widget {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .sw-header {
+    background: linear-gradient(90deg, var(--primary-dark), var(--primary));
+    padding: 9px 14px;
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .sw-body { padding: 12px; }
+
+  /* SOCIAL */
+  .social-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .social-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    color: white;
+    transition: opacity 0.2s;
+  }
+  .social-btn:hover { opacity: 0.85; }
+  .social-btn.fb { background: #3b5998; }
+  .social-btn.yt { background: #cc0000; }
+  .social-btn.cls { background: #ff6d00; }
+  .social-btn.kishor { background: #1565c0; }
+  .social-icon { font-size: 18px; }
+
+  /* QUICK LINKS */
+  .quick-links a {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 12.5px;
+    border-bottom: 1px solid #eee;
+    gap: 6px;
+    transition: color 0.15s;
+  }
+  .quick-links a:last-child { border-bottom: none; }
+  .quick-links a:hover { color: var(--primary); }
+  .quick-links a::before { content: '›'; color: var(--accent); font-size: 16px; }
+
+  /* CONTACT SIDEBAR */
+  .contact-info p {
+    font-size: 12.5px;
+    margin-bottom: 6px;
+    display: flex;
+    gap: 6px;
+  }
+  .contact-info p span:first-child { color: var(--primary); font-weight: 600; }
+  .exam-control {
+    background: #fef9e7;
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 12px;
+  }
+  .exam-control h4 { color: var(--primary-dark); margin-bottom: 5px; }
+
+  /* CATEGORIES GRID */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .cat-card {
+    background: var(--white);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--primary-dark);
+    border-bottom: 3px solid transparent;
+  }
+  .cat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    border-bottom-color: var(--gold);
+  }
+  .cat-card .cat-icon { font-size: 22px; margin-bottom: 5px; display: block; }
+
+  /* FOOTER */
+  footer {
+    background: var(--primary-dark);
+    color: #aed6f1;
+    padding: 30px 0 0;
+    margin-top: 20px;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 30px;
+    padding-bottom: 20px;
+  }
+  .footer-brand h3 {
+    font-family: 'Noto Serif Bengali', serif;
+    color: white;
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+  .footer-brand p { font-size: 12px; line-height: 1.7; }
+  footer h4 { color: var(--gold); font-size: 13px; margin-bottom: 10px; }
+  footer ul { list-style: none; }
+  footer ul li { margin-bottom: 6px; }
+  footer ul li a { color: #aed6f1; text-decoration: none; font-size: 12px; transition: color 0.15s; }
+  footer ul li a:hover { color: var(--gold); }
+  .footer-bottom {
+    background: rgba(0,0,0,0.2);
+    padding: 10px 0;
+    text-align: center;
+    font-size: 11.5px;
+    color: #7fb3d3;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 10px;
+  }
+
+  /* SCROLL TOP */
+  .scroll-top {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--primary);
+    color: white;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: var(--shadow-hover);
+    transition: background 0.2s;
+    z-index: 999;
+    text-decoration: none;
+  }
+  .scroll-top:hover { background: var(--primary-dark); }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .service-grid { grid-template-columns: repeat(3, 1fr); }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .officer-cards { flex-direction: column; }
+    .cat-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 600px) {
+    .service-grid { grid-template-columns: repeat(2, 1fr); }
+    .nav-inner { overflow-x: auto; }
+    header { padding: 10px 0; }
+    .header-text h1 { font-size: 15px; }
+    .footer-grid { grid-template-columns: 1fr; }
+    .cat-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="container">
+    <div>📅 রবিবার, ২২ মার্চ ২০২৬</div>
+    <div class="gov-links">
+      <a href="#">জাতীয় তথ্যবাতায়ন</a> |
+      <a href="#">শিক্ষা মন্ত্রণালয়</a> |
+      <a href="#">BANBEIS</a> |
+      <a href="#">Login</a>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo-wrap">🎓</div>
+      <div class="header-text">
+        <h1>মাধ্যমিক ও উচ্চমাধ্যমিক শিক্ষা বোর্ড, ঢাকা</h1>
+        <h2>Board of Intermediate and Secondary Education, Dhaka</h2>
+      </div>
+      <div class="header-right">
+        <button class="btn-lang">বাংলা</button>
+        <button class="btn-lang" style="background:#2e86c1; color:white;">EN</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav>
+  <div class="container">
+    <div class="nav-inner">
+      <a href="#" class="nav-item active">🏠 Home</a>
+      <div class="nav-item">About Board <span class="arrow">▾</span>
+        <div class="dropdown">
+          <a href="#">History</a>
+          <a href="#">Officers (Board)</a>
+          <a href="#">Officers (Deputed)</a>
+          <a href="#">Citizen Charter</a>
+          <a href="#">Regulation, 2009</a>
+          <a href="#">Foreign Curriculum</a>
+          <a href="#">Innovation Team</a>
+        </div>
+      </div>
+      <div class="nav-item">Forms <span class="arrow">▾</span>
+        <div class="dropdown">
+          <a href="#">Certificate Section Form</a>
+          <a href="#">College Section Forms</a>
+          <a href="#">School Section Forms</a>
+          <a href="#">Name Correction Form</a>
+          <a href="#">Application & Appeal Form</a>
+        </div>
+      </div>
+      <a href="#" class="nav-item">Fees</a>
+      <div class="nav-item">Result Archive <span class="arrow">▾</span>
+        <div class="dropdown">
+          <a href="#">Dhaka Board Server</a>
+          <a href="#">Teletalk Archive</a>
+        </div>
+      </div>
+      <a href="#" class="nav-item">XI Admission</a>
+      <a href="#" class="nav-item">Contact Us</a>
+      <a href="#" class="nav-item" style="margin-left:auto; background:var(--accent);">🔑 Login</a>
+    </div>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="container" style="display:flex; align-items:center; overflow:hidden; width:100%;">
+    <span class="ticker-label">নোটিশ</span>
+    <div style="overflow:hidden; flex:1;">
+      <div class="ticker-text">📢 এইচএসসি পুনঃনিরীক্ষণ ফলাফল ২০২৫ প্রকাশিত হয়েছে &nbsp;&nbsp;|&nbsp;&nbsp; 📢 একাদশ শ্রেণিতে ভর্তি আবেদন চলছে &nbsp;&nbsp;|&nbsp;&nbsp; 📢 এসএসসি রেজিস্ট্রেশন সংক্রান্ত বিজ্ঞপ্তি &nbsp;&nbsp;|&nbsp;&nbsp; 📢 অনলাইনে আবেদন করুন ইফাইল পোর্টালে</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+  <div class="main-grid">
+    <!-- LEFT COLUMN -->
+    <div>
+      <!-- OFFICERS -->
+      <div class="officer-cards">
+        <div class="officer-card">
+          <div class="officer-avatar">👨‍💼</div>
+          <div class="officer-info">
+            <h3>প্রফেসর ড. খন্দোকার এহসানুল কবির</h3>
+            <p>চেয়ারম্যান</p>
+          </div>
+        </div>
+        <div class="officer-card" style="border-left-color: var(--green);">
+          <div class="officer-avatar" style="background: linear-gradient(135deg, #27ae60, #1a7a3f);">👨‍💼</div>
+          <div class="officer-info">
+            <h3>প্রফেসর ড. মো: জাহাঙ্গীর আলম</h3>
+            <p>সচিব</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONLINE SERVICES -->
+      <div class="section-title">⚡ অনলাইন সেবাসমূহ</div>
+      <div class="service-grid">
+        <a href="#" class="service-card">
+          <div class="service-icon">📝</div>
+          <span>অনলাইনে আবেদন</span>
+        </a>
+        <a href="#" class="service-card">
+          <div class="service-icon">📡</div>
+          <span>EIIN SIM আবেদন</span>
+        </a>
+        <a href="#" class="service-card">
+          <div class="service-icon">🖥️</div>
+          <span>OEMS</span>
+        </a>
+        <a href="#" class="service-card">
+          <div class="service-icon">📜</div>
+          <span>e-TC</span>
+        </a>
+        <a href="#" class="service-card">
+          <div class="service-icon">📋</div>
+          <span>e-TIF</span>
+        </a>
+        <a href="#" class="service-card">
+          <div class="service-icon">🏫</div>
+          <span>প্রতিষ্ঠান ওয়েবসাইট</span>
+        </a>
+        <a href="#" class="service-card" style="border-top-color: var(--green);">
+          <div class="service-icon">📊</div>
+          <span>SSC/HSC ফলাফল<br>(বোর্ড সার্ভার)</span>
+        </a>
+        <a href="#" class="service-card" style="border-top-color: #e74c3c;">
+          <div class="service-icon">📱</div>
+          <span>SSC/HSC ফলাফল<br>(টেলিটক)</span>
+        </a>
+        <a href="#" class="service-card" style="border-top-color: var(--gold);">
+          <div class="service-icon">✅</div>
+          <span>HSC পুনঃনিরীক্ষণ ফলাফল ২০২৫</span>
+        </a>
+        <a href="#" class="service-card" style="border-top-color: #8e44ad;">
+          <div class="service-icon">💳</div>
+          <span>Sonali Seba</span>
+        </a>
+        <a href="#" class="service-card">
+          <div class="service-icon">📧</div>
+          <span>Web Mail</span>
+        </a>
+        <a href="#" class="service-card">
+          <div class="service-icon">🏢</div>
+          <span>কেন্দ্রের তথ্য</span>
+        </a>
+      </div>
+
+      <!-- HOTLINES -->
+      <div class="section-title">📞 জরুরি সেবা নম্বর</div>
+      <div class="hotline-row">
+        <a href="tel:333" class="hotline-card">
+          <div>
+            <div class="hotline-num">৩৩৩</div>
+            <div class="hotline-desc">সরকারি তথ্য ও সেবা</div>
+          </div>
+        </a>
+        <a href="tel:999" class="hotline-card">
+          <a href="tel:999" class="hotline-card" style="border-left: 3px solid #c0392b;">
+          <div>
+            <div class="hotline-num" style="color:#c0392b;">৯৯৯</div>
+            <div class="hotline-desc">জরুরি সেবা</div>
+          </div>
+        </a>
+        <a href="tel:109" class="hotline-card">
+          <div>
+            <div class="hotline-num" style="color: #8e44ad;">১০৯</div>
+            <div class="hotline-desc">নারী ও শিশু নির্যাতন প্রতিরোধ</div>
+          </div>
+        </a>
+        <a href="tel:106" class="hotline-card">
+          <div>
+            <div class="hotline-num" style="color: var(--green);">১০৬</div>
+            <div class="hotline-desc">দুদক</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- NOTICE BOARD -->
+      <div class="notice-box">
+        <div class="notice-header">
+          📌 সর্বশেষ নোটিশ
+          <a href="#">সকল নোটিশ →</a>
+        </div>
+        <div class="notice-list">
+          <a href="#" class="notice-item">
+            <div class="bullet"></div>
+            <div style="flex:1;">
+              <div class="notice-item-text">এইচএসসি পুনঃনিরীক্ষণ ফলাফল ২০২৫ প্রকাশিত হয়েছে</div>
+              <div class="notice-date">১৬ নভেম্বর ২০২৫</div>
+            </div>
+            <div class="new-badge">NEW</div>
+          </a>
+          <a href="#" class="notice-item">
+            <div class="bullet"></div>
+            <div style="flex:1;">
+              <div class="notice-item-text">একাদশ শ্রেণিতে ভর্তির বিজ্ঞপ্তি ২০২৫-২৬</div>
+              <div class="notice-date">১০ নভেম্বর ২০২৫</div>
+            </div>
+            <div class="new-badge">NEW</div>
+          </a>
+          <a href="#" class="notice-item">
+            <div class="bullet"></div>
+            <div style="flex:1;">
+              <div class="notice-item-text">এসএসসি পরীক্ষার রেজিস্ট্রেশন ফরম পূরণ সংক্রান্ত বিজ্ঞপ্তি</div>
+              <div class="notice-date">০৫ নভেম্বর ২০২৫</div>
+            </div>
+          </a>
+          <a href="#" class="notice-item">
+            <div class="bullet"></div>
+            <div style="flex:1;">
+              <div class="notice-item-text">নাম ও বয়স সংশোধন সংক্রান্ত আদেশ</div>
+              <div class="notice-date">২৮ অক্টোবর ২০২৫</div>
+            </div>
+          </a>
+          <a href="#" class="notice-item">
+            <div class="bullet"></div>
+            <div style="flex:1;">
+              <div class="notice-item-text">কলেজ পাঠদান স্বীকৃতি নবায়ন সংক্রান্ত বিজ্ঞপ্তি</div>
+              <div class="notice-date">২০ অক্টোবর ২০২৫</div>
+            </div>
+          </a>
+          <a href="#" class="notice-item">
+            <div class="bullet"></div>
+            <div style="flex:1;">
+              <div class="notice-item-text">ডকুমেন্ট উত্তোলনের আবেদন প্রক্রিয়া সংক্রান্ত বিজ্ঞপ্তি</div>
+              <div class="notice-date">১৫ অক্টোবর ২০২৫</div>
+            </div>
+          </a>
+          <a href="#" class="notice-item">
+            <div class="bullet"></div>
+            <div style="flex:1;">
+              <div class="notice-item-text">HSC পরীক্ষার কেন্দ্র তালিকা প্রকাশ</div>
+              <div class="notice-date">০৮ অক্টোবর ২০২৫</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- CATEGORIES -->
+      <div class="section-title">📂 বিভাগ অনুযায়ী তথ্য</div>
+      <div class="cat-grid">
+        <div class="cat-card"><span class="cat-icon">🥈</span>জুনিয়র বৃত্তি</div>
+        <div class="cat-card"><span class="cat-icon">📗</span>এসএসসি কর্নার</div>
+        <div class="cat-card"><span class="cat-icon">📘</span>এইচএসসি কর্নার</div>
+        <div class="cat-card"><span class="cat-icon">⚖️</span>প্রশাসনিক আদেশ</div>
+        <div class="cat-card"><span class="cat-icon">🏫</span>স্কুল সংক্রান্ত আদেশ</div>
+        <div class="cat-card"><span class="cat-icon">🎓</span>কলেজ সংক্রান্ত আদেশ</div>
+        <div class="cat-card"><span class="cat-icon">📋</span>সিটিজেন্‌স চার্টার</div>
+        <div class="cat-card"><span class="cat-icon">🛡️</span>জাতীয় শুদ্ধাচার কৌশল</div>
+        <div class="cat-card"><span class="cat-icon">💬</span>অভিযোগ প্রতিকার</div>
+        <div class="cat-card"><span class="cat-icon">📊</span>বার্ষিক কর্মসম্পাদন</div>
+        <div class="cat-card"><span class="cat-icon">🔓</span>তথ্য অধিকার</div>
+        <div class="cat-card"><span class="cat-icon">💡</span>সেবা সহজিকরণ</div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <!-- RESULT CHECK -->
+      <div class="result-box">
+        <div class="result-header">📊 পরীক্ষার ফলাফল দেখুন</div>
+        <div class="result-body">
+          <form class="result-form" onsubmit="return false;">
+            <select>
+              <option>পরীক্ষা নির্বাচন করুন</option>
+              <option>SSC / সমমান</option>
+              <option>HSC / সমমান</option>
+            </select>
+            <select>
+              <option>সাল নির্বাচন করুন</option>
+              <option>২০২৫</option>
+              <option>২০২৪</option>
+              <option>২০২৩</option>
+            </select>
+            <input type="text" placeholder="রোল নম্বর লিখুন">
+            <input type="text" placeholder="রেজিস্ট্রেশন নম্বর লিখুন">
+            <button class="btn-result">ফলাফল দেখুন →</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ONLINE APPLICATION -->
+      <div class="sidebar-widget">
+        <div class="sw-header">📝 অনলাইনে আবেদন করুন</div>
+        <div class="sw-body">
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <a href="#" style="background:#eaf4fb; padding:8px 10px; border-radius:4px; font-size:12px; color:var(--primary); text-decoration:none; border-left:3px solid var(--primary); display:block;">সমতুল্য সনদের আবেদন</a>
+            <a href="#" style="background:#eaf4fb; padding:8px 10px; border-radius:4px; font-size:12px; color:var(--primary); text-decoration:none; border-left:3px solid var(--primary-light); display:block;">নাম ও বয়স সংশোধন আবেদন</a>
+            <a href="#" style="background:#eaf4fb; padding:8px 10px; border-radius:4px; font-size:12px; color:var(--primary); text-decoration:none; border-left:3px solid var(--green); display:block;">ডকুমেন্ট উত্তোলনের আবেদন</a>
+            <a href="#" style="background:#eaf4fb; padding:8px 10px; border-radius:4px; font-size:12px; color:var(--primary); text-decoration:none; border-left:3px solid var(--gold); display:block;">বিদেশগামী শিক্ষার্থীদের সত্যায়ন</a>
+            <a href="#" style="background:#eaf4fb; padding:8px 10px; border-radius:4px; font-size:12px; color:var(--primary); text-decoration:none; border-left:3px solid var(--accent); display:block;">বিদ্যালয় শাখার আবেদন</a>
+            <a href="#" style="background:#eaf4fb; padding:8px 10px; border-radius:4px; font-size:12px; color:var(--primary); text-decoration:none; border-left:3px solid #8e44ad; display:block;">কলেজ শাখার আবেদন</a>
+            <a href="#" style="background:#fef9e7; padding:8px 10px; border-radius:4px; font-size:12px; color:#7d6608; text-decoration:none; border-left:3px solid var(--gold); display:block;">অভিযোগের আবেদন</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- SOCIAL -->
+      <div class="sidebar-widget">
+        <div class="sw-header">🌐 সামাজিক যোগাযোগ</div>
+        <div class="sw-body">
+          <div class="social-links">
+            <a href="#" class="social-btn fb"><span class="social-icon">📘</span>Facebook</a>
+            <a href="#" class="social-btn yt"><span class="social-icon">▶️</span>YouTube</a>
+            <a href="#" class="social-btn cls"><span class="social-icon">🎬</span>অনলাইন ক্লাস</a>
+            <a href="#" class="social-btn kishor"><span class="social-icon">🌱</span>কিশোর বাতায়ন</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTACT INFO -->
+      <div class="sidebar-widget">
+        <div class="sw-header">📍 যোগাযোগের তথ্য</div>
+        <div class="sw-body">
+          <div class="contact-info">
+            <p><span>ঠিকানা:</span><span>১৩-১৪, জয়নাগ রোড, বকশিবাজার, ঢাকা-১২১১</span></p>
+            <p><span>ইমেইল:</span><span>infobisedhaka@gmail.com</span></p>
+          </div>
+          <div class="exam-control">
+            <h4>📞 পরীক্ষা নিয়ন্ত্রণ কক্ষ</h4>
+            <p>ফোন: 029669815</p>
+            <p>মোবাইল: 01977733553</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK LINKS -->
+      <div class="sidebar-widget">
+        <div class="sw-header">🔗 গুরুত্বপূর্ণ লিংক</div>
+        <div class="sw-body">
+          <div class="quick-links">
+            <a href="#">শিক্ষা মন্ত্রণালয়</a>
+            <a href="#">জাতীয় ই-তথ্যকোষ</a>
+            <a href="#">BANBEIS</a>
+            <a href="#">কিশোর বাতায়ন</a>
+            <a href="#">একাদশ শ্রেণি ভর্তি</a>
+            <a href="#">মাই গভ বাংলাদেশ</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h3>মাধ্যমিক ও উচ্চমাধ্যমিক শিক্ষা বোর্ড, ঢাকা</h3>
+        <p>Board of Intermediate and Secondary Education, Dhaka<br>
+        ১৩-১৪, জয়নাগ রোড, বকশিবাজার, ঢাকা-১২১১<br>
+        Email: infobisedhaka@gmail.com</p>
+      </div>
+      <div>
+        <h4>দ্রুত লিংক</h4>
+        <ul>
+          <li><a href="#">SSC ফলাফল</a></li>
+          <li><a href="#">HSC ফলাফল</a></li>
+          <li><a href="#">অনলাইন আবেদন</a></li>
+          <li><a href="#">নোটিশ বোর্ড</a></li>
+          <li><a href="#">ফরম ডাউনলোড</a></li>
+          <li><a href="#">ফি তালিকা</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>সেবাসমূহ</h4>
+        <ul>
+          <li><a href="#">সনদ যাচাই</a></li>
+          <li><a href="#">নাম সংশোধন</a></li>
+          <li><a href="#">রেজিস্ট্রেশন কার্ড</a></li>
+          <li><a href="#">একাদশ ভর্তি</a></li>
+          <li><a href="#">অভিযোগ বাক্স</a></li>
+          <li><a href="#">যোগাযোগ</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    Copyright © ২০২৪ মাধ্যমিক ও উচ্চমাধ্যমিক শিক্ষা বোর্ড, ঢাকা। সর্বস্বত্ব সংরক্ষিত।
+  </div>
+</footer>
+
+<a href="#" class="scroll-top" title="উপরে যান">↑</a>
+
+</body>
+</html>
