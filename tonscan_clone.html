@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tonscan – TON Blockchain Explorer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter','sans-serif'], mono: ['JetBrains Mono','monospace'] },
+      colors: {
+        ton: { 50:'#e8f4fd', 100:'#d0e9fb', 200:'#a1d3f7', 300:'#5cb8f5', 400:'#2ea6f4', 500:'#0098ea', 600:'#007ec5', 700:'#005f96', 800:'#003f64', 900:'#001f32' },
+      },
+      animation: {
+        'fadeIn': 'fadeIn 0.5s ease forwards',
+        'slideUp': 'slideUp 0.4s ease forwards',
+        'pulse-slow': 'pulse 2s infinite',
+        'spin-slow': 'spin 3s linear infinite',
+        'number': 'countUp 1s ease forwards',
+        'blink': 'blink 1.2s step-end infinite',
+        'glow': 'glow 2s ease-in-out infinite',
+      },
+      keyframes: {
+        fadeIn: {'0%':{opacity:0,transform:'translateY(8px)'},'100%':{opacity:1,transform:'translateY(0)'}},
+        slideUp: {'0%':{opacity:0,transform:'translateY(16px)'},'100%':{opacity:1,transform:'translateY(0)'}},
+        blink: {'0%,100%':{opacity:1},'50%':{opacity:0}},
+        glow: {'0%,100%':{boxShadow:'0 0 6px #0098ea44'},'50%':{boxShadow:'0 0 18px #0098ea99'}},
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: #f1f5f9; }
+  ::-webkit-scrollbar-thumb { background: #0098ea; border-radius: 3px; }
+  .dark ::-webkit-scrollbar-track { background: #1e293b; }
+  .hash { font-family: 'JetBrains Mono', monospace; }
+  .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
+  .stat-card:hover { transform: translateY(-3px); }
+  .tx-row { transition: background 0.15s; }
+  .tx-row:hover { background: rgba(0,152,234,0.06); }
+  .nav-link { transition: color 0.2s, border-color 0.2s; }
+  .glow-dot { animation: glow 2s ease-in-out infinite; }
+  @keyframes glow { 0%,100%{box-shadow:0 0 4px #22c55e88}50%{box-shadow:0 0 12px #22c55ebb} }
+  .ton-gem { background: linear-gradient(135deg, #0098ea, #005f96); }
+  .chat-scroll { max-height: 300px; overflow-y: auto; scrollbar-width: thin; }
+  .wave span { display:inline-block; animation: wave 1s ease-in-out infinite; }
+  .wave span:nth-child(1){animation-delay:0s}
+  .wave span:nth-child(2){animation-delay:0.15s}
+  .wave span:nth-child(3){animation-delay:0.3s}
+  @keyframes wave { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+  .counter { font-variant-numeric: tabular-nums; }
+  .gradient-text { background: linear-gradient(135deg, #0098ea, #00c6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+</style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── Mock Data ──────────────────────────────────────────
+const genHash = () => Math.random().toString(36).slice(2,12).toUpperCase().padEnd(10,'F');
+const genAddr = () => 'EQ' + Math.random().toString(36).slice(2,8).toUpperCase() + '...' + Math.random().toString(36).slice(2,6).toUpperCase();
+const randTon = (min,max) => (Math.random()*(max-min)+min).toFixed(2);
+const randInt = (min,max) => Math.floor(Math.random()*(max-min)+min);
+
+const makeTx = () => ({
+  hash: genHash(),
+  from: genAddr(),
+  to: genAddr(),
+  amount: randTon(0.1, 500),
+  fee: (Math.random()*0.05).toFixed(4),
+  time: `${randInt(1,59)}s ago`,
+  type: ['Transfer','Jetton Transfer','NFT Transfer','Contract Deploy'][randInt(0,4)],
+  status: 'success',
+});
+
+const makeBlock = () => ({
+  seqno: randInt(37000000, 38000000),
+  hash: genHash(),
+  txCount: randInt(1, 80),
+  time: `${randInt(1,59)}s ago`,
+  lt: randInt(40000000, 50000000),
+});
+
+const INIT_TXS = Array.from({length:10}, makeTx);
+const INIT_BLOCKS = Array.from({length:8}, makeBlock).sort((a,b)=>b.seqno-a.seqno);
+
+const JETTONS = [
+  { name:'Tether USD', symbol:'USDT', price:'1.00', change:'+0.01%', vol:'$2.3M', color:'bg-green-500' },
+  { name:'USD Coin', symbol:'USDC', price:'1.00', change:'-0.00%', vol:'$1.1M', color:'bg-blue-500' },
+  { name:'BOLT', symbol:'BOLT', price:'0.0042', change:'+12.3%', vol:'$430K', color:'bg-yellow-500' },
+  { name:'Scale', symbol:'SCALE', price:'0.082', change:'-3.2%', vol:'$210K', color:'bg-purple-500' },
+  { name:'NOT', symbol:'NOT', price:'0.0091', change:'+8.7%', vol:'$890K', color:'bg-orange-500' },
+  { name:'DOGS', symbol:'DOGS', price:'0.00031', change:'+24.1%', vol:'$3.1M', color:'bg-pink-500' },
+];
+
+const NAV_ITEMS = [
+  { icon:'⛓️', label:'Blockchain', sub:['Transactions','Blocks','Accounts','Validators'] },
+  { icon:'💎', label:'Jettons', sub:['Top Jettons','Jetton Holders','Transfers'] },
+  { icon:'🖼️', label:'NFT', sub:['Collections','NFT Items','Transfers'] },
+  { icon:'📱', label:'Apps', sub:['DApps','Staking','DEX'] },
+  { icon:'📊', label:'Analytics', sub:['Network Stats','Gas Stats','Top Accounts'] },
+];
+
+// ── Components ─────────────────────────────────────────
+
+function TopBar({ darkMode, setDarkMode }) {
+  return (
+    <div className="bg-ton-900 dark:bg-slate-950 border-b border-ton-800/40 text-xs text-slate-400 py-1.5">
+      <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
+        <div className="flex gap-4">
+          <span>🌐 Mainnet</span>
+          <a href="#" className="hover:text-ton-400 transition-colors">Testnet ↗</a>
+          <a href="#" className="hover:text-ton-400 transition-colors">API Docs ↗</a>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400 glow-dot"/>
+            <span>Network OK</span>
+          </div>
+          <button onClick={() => setDarkMode(!darkMode)}
+            className="hover:text-ton-400 transition-colors text-base">
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Header({ search, setSearch, onSearch }) {
+  return (
+    <header className="ton-gem py-6 md:py-10 relative overflow-hidden">
+      <div className="absolute inset-0 opacity-20" style={{backgroundImage:'radial-gradient(ellipse at 20% 50%, #00c6ff44 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, #0098ea44 0%, transparent 50%)'}}/>
+      <div className="absolute top-0 right-0 w-64 h-64 opacity-5 text-9xl flex items-center justify-center select-none pointer-events-none">💎</div>
+      <div className="max-w-7xl mx-auto px-4 relative z-10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="text-3xl">💎</div>
+          <div>
+            <h1 className="text-white font-bold text-xl tracking-tight">Tonscan</h1>
+            <p className="text-ton-200 text-xs">TON Blockchain Explorer</p>
+          </div>
+        </div>
+        <div className="max-w-2xl">
+          <p className="text-white/80 text-sm mb-3">Search addresses, transactions, blocks, jettons & NFTs</p>
+          <div className="flex gap-2">
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && onSearch()}
+              placeholder="Address / Transaction hash / Block / Domain..."
+              className="flex-1 bg-white/10 backdrop-blur border border-white/20 text-white placeholder-white/50 rounded-xl px-4 py-3 text-sm outline-none focus:bg-white/15 focus:border-white/40 transition-all hash"
+            />
+            <button onClick={onSearch}
+              className="bg-white text-ton-700 font-semibold px-5 py-3 rounded-xl hover:bg-ton-50 transition-colors text-sm flex-shrink-0">
+              Search
+            </button>
+          </div>
+          <div className="flex gap-2 mt-2 flex-wrap">
+            {['EQC...abc123','Block #37500000','USDT Jetton'].map((s,i) => (
+              <button key={i} onClick={() => setSearch(s)}
+                className="text-xs bg-white/10 hover:bg-white/20 text-white/70 hover:text-white px-2 py-1 rounded-lg transition-all hash">
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function Navbar() {
+  const [active, setActive] = useState(null);
+  return (
+    <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700/50 sticky top-0 z-50 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 flex items-stretch overflow-x-auto">
+        {NAV_ITEMS.map((item,i) => (
+          <div key={i} className="relative group flex-shrink-0">
+            <button onClick={() => setActive(active===i?null:i)}
+              className={`flex items-center gap-1.5 px-4 py-3.5 text-sm font-medium nav-link border-b-2 transition-all whitespace-nowrap
+                ${active===i ? 'border-ton-500 text-ton-600 dark:text-ton-400' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-ton-600 dark:hover:text-ton-400 hover:border-ton-300'}`}>
+              <span>{item.icon}</span>
+              <span>{item.label}</span>
+              <span className="text-xs opacity-60">▾</span>
+            </button>
+            <div className="absolute top-full left-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl min-w-40 z-50 py-1 hidden group-hover:block">
+              {item.sub.map((s,j) => (
+                <a key={j} href="#"
+                  className="block px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-ton-50 dark:hover:bg-slate-700 hover:text-ton-600 transition-colors">
+                  {s}
+                </a>
+              ))}
+            </div>
+          </div>
+        ))}
+        <div className="ml-auto flex items-center px-3">
+          <a href="#" className="text-xs bg-ton-500 hover:bg-ton-600 text-white px-3 py-1.5 rounded-lg font-medium transition-colors flex-shrink-0">
+            API ↗
+          </a>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+function NetworkStats() {
+  const [stats, setStats] = useState({
+    price: '3.14', change: '+2.4',
+    mcap: '11.2B', supply: '5.1B',
+    tps: '45', block: '37482910',
+    validators: '362', staked: '50.2%'
+  });
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setStats(s => ({
+        ...s,
+        tps: (Math.random()*30+30).toFixed(0),
+        block: (parseInt(s.block)+1).toString(),
+        price: (parseFloat(s.price) + (Math.random()-0.49)*0.01).toFixed(4),
+      }));
+    }, 2000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const cards = [
+    { label:'TON Price', value:`$${stats.price}`, sub:`${stats.change}% (24h)`, subColor: parseFloat(stats.change)>0?'text-green-500':'text-red-400', icon:'💎', bg:'from-ton-600 to-ton-500' },
+    { label:'Market Cap', value:`$${stats.mcap}`, sub:'Circulating supply', icon:'📈', bg:'from-purple-600 to-purple-500' },
+    { label:'Transactions/sec', value:stats.tps, sub:'Live TPS', icon:'⚡', bg:'from-amber-600 to-amber-500', live:true },
+    { label:'Masterchain Block', value:`#${parseInt(stats.block).toLocaleString()}`, sub:'Latest block', icon:'⛓️', bg:'from-emerald-600 to-emerald-500', live:true },
+    { label:'Validators', value:stats.validators, sub:'Active nodes', icon:'🏛️', bg:'from-pink-600 to-pink-500' },
+    { label:'Staked TON', value:stats.staked, sub:'of total supply', icon:'🔒', bg:'from-indigo-600 to-indigo-500' },
+  ];
+
+  return (
+    <div className="mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {cards.map((c,i) => (
+          <div key={i}
+            className={`stat-card bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700/50 hover:shadow-md cursor-pointer`}
+            style={{animationDelay:`${i*0.05}s`}}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-lg">{c.icon}</span>
+              {c.live && <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"/><span className="text-xs text-green-500">Live</span></div>}
+            </div>
+            <div className="font-bold text-lg counter text-slate-800 dark:text-white leading-tight">{c.value}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{c.label}</div>
+            {c.subColor
+              ? <div className={`text-xs font-medium mt-1 ${c.subColor}`}>{c.sub}</div>
+              : <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">{c.sub}</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TransactionRow({ tx, i }) {
+  const typeColors = {
+    'Transfer': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    'Jetton Transfer': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    'NFT Transfer': 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
+    'Contract Deploy': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  };
+  return (
+    <tr className="tx-row border-b border-slate-100 dark:border-slate-700/50" style={{animation:`fadeIn 0.4s ease ${i*0.04}s both`}}>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+            <div className="w-2 h-2 rounded-full bg-green-500"/>
+          </div>
+          <span className="hash text-xs text-ton-600 dark:text-ton-400 hover:underline cursor-pointer">{tx.hash}</span>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[tx.type]||typeColors['Transfer']}`}>
+          {tx.type}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="hash text-xs text-slate-500 dark:text-slate-400">{tx.from}</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">→ {tx.to}</span>
+        </div>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">{tx.amount}</span>
+        <span className="text-xs text-slate-500 ml-1">TON</span>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">{tx.fee}</span>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <span className="text-xs text-slate-400 dark:text-slate-500">{tx.time}</span>
+      </td>
+    </tr>
+  );
+}
+
+function LatestTransactions({ txs }) {
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden mb-6">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700/50">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">🔄</span>
+          <h2 className="font-semibold text-sm">Latest Transactions</h2>
+          <div className="flex items-center gap-1 ml-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"/>
+            <span className="text-xs text-green-500">Live</span>
+          </div>
+        </div>
+        <a href="#" className="text-xs text-ton-500 hover:text-ton-600 font-medium transition-colors">View all →</a>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-700/50">
+              <th className="px-4 py-2 text-left font-medium">Hash</th>
+              <th className="px-4 py-2 text-left font-medium">Type</th>
+              <th className="px-4 py-2 text-left font-medium">From / To</th>
+              <th className="px-4 py-2 text-right font-medium">Amount</th>
+              <th className="px-4 py-2 text-right font-medium">Fee</th>
+              <th className="px-4 py-2 text-right font-medium">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {txs.map((tx, i) => <TransactionRow key={tx.hash+i} tx={tx} i={i}/>)}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function LatestBlocks({ blocks }) {
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden mb-6">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700/50">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📦</span>
+          <h2 className="font-semibold text-sm">Latest Blocks</h2>
+          <div className="flex items-center gap-1 ml-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"/>
+            <span className="text-xs text-green-500">Live</span>
+          </div>
+        </div>
+        <a href="#" className="text-xs text-ton-500 hover:text-ton-600 font-medium transition-colors">View all →</a>
+      </div>
+      <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
+        {blocks.map((b,i) => (
+          <div key={b.seqno} className="tx-row flex items-center justify-between px-4 py-3"
+            style={{animation:`fadeIn 0.4s ease ${i*0.04}s both`}}>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-ton-50 dark:bg-ton-900/30 rounded-lg flex items-center justify-center text-base flex-shrink-0">⛓️</div>
+              <div>
+                <div className="font-semibold text-sm text-ton-600 dark:text-ton-400 hover:underline cursor-pointer">
+                  #{b.seqno.toLocaleString()}
+                </div>
+                <div className="hash text-xs text-slate-400 dark:text-slate-500">{b.hash}</div>
+              </div>
+            </div>
+            <div className="text-center hidden md:block">
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-300">{b.txCount}</div>
+              <div className="text-xs text-slate-400">txs</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-slate-500 dark:text-slate-400">{b.time}</div>
+              <div className="hash text-xs text-slate-400 dark:text-slate-500">LT: {b.lt.toLocaleString()}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function JettonTable() {
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden mb-6">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700/50">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">🪙</span>
+          <h2 className="font-semibold text-sm">Top Jettons</h2>
+        </div>
+        <a href="#" className="text-xs text-ton-500 hover:text-ton-600 font-medium transition-colors">View all →</a>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-700/50">
+              <th className="px-4 py-2 text-left font-medium">#</th>
+              <th className="px-4 py-2 text-left font-medium">Token</th>
+              <th className="px-4 py-2 text-right font-medium">Price</th>
+              <th className="px-4 py-2 text-right font-medium">Change (24h)</th>
+              <th className="px-4 py-2 text-right font-medium">Volume</th>
+            </tr>
+          </thead>
+          <tbody>
+            {JETTONS.map((j,i) => (
+              <tr key={j.symbol} className="tx-row border-b border-slate-100 dark:border-slate-700/50 last:border-0">
+                <td className="px-4 py-3 text-xs text-slate-400">{i+1}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-7 h-7 rounded-full ${j.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                      {j.symbol[0]}
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm text-slate-800 dark:text-slate-200">{j.name}</div>
+                      <div className="text-xs text-slate-400">{j.symbol}</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-right font-mono text-sm">${j.price}</td>
+                <td className={`px-4 py-3 text-right text-sm font-medium ${j.change.startsWith('+') ? 'text-green-500' : 'text-red-400'}`}>
+                  {j.change}
+                </td>
+                <td className="px-4 py-3 text-right text-sm text-slate-600 dark:text-slate-400">{j.vol}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function SearchResult({ query, onClose }) {
+  if (!query) return null;
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16 px-4" onClick={onClose}>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-2xl p-6 animate-slideUp" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">Search Results</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl">×</button>
+        </div>
+        <div className="hash text-xs bg-slate-100 dark:bg-slate-700 rounded-lg px-3 py-2 text-slate-600 dark:text-slate-300 break-all mb-4">
+          {query}
+        </div>
+        <div className="space-y-3">
+          {['Address: Balance 12.45 TON | 23 transactions','Transaction: 0.5 TON Transfer | Success','Block: #37,482,910 | 45 transactions'].map((r,i) => (
+            <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl hover:bg-ton-50 dark:hover:bg-slate-700 cursor-pointer transition-colors">
+              <div className="w-8 h-8 bg-ton-100 dark:bg-ton-900/30 rounded-lg flex items-center justify-center text-sm flex-shrink-0">
+                {['👤','🔄','📦'][i]}
+              </div>
+              <span className="text-sm text-slate-700 dark:text-slate-300">{r}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-center text-slate-400 dark:text-slate-500 mt-4">Demo mode — real blockchain data not connected</p>
+      </div>
+    </div>
+  );
+}
+
+function AIChatbot() {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { role:'assistant', content:"Hi! I'm Tonscan AI assistant. Ask me anything about TON blockchain — transactions, wallets, validators, jettons, or how to use this explorer! 💎" }
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const chatRef = useRef(null);
+
+  useEffect(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  }, [messages]);
+
+  const send = async () => {
+    if (!input.trim() || loading) return;
+    const userMsg = input.trim();
+    setInput('');
+    setMessages(prev => [...prev, { role:'user', content: userMsg }]);
+    setLoading(true);
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: `You are an expert TON blockchain assistant for Tonscan.org — the TON Blockchain Explorer. 
+          Answer questions about: TON blockchain, wallet addresses, transactions, blocks, validators, jettons (tokens), NFTs, staking, DApps, TON coin price, how to use the explorer.
+          Be concise, friendly, and technical when needed. Use emojis sparingly. 
+          If asked about specific live data, explain you're a demo and suggest checking the live explorer.`,
+          messages: messages.filter((_,i)=>i>0).concat([{role:'user',content:userMsg}])
+        })
+      });
+      const data = await res.json();
+      const reply = data.content?.[0]?.text || 'Sorry, something went wrong.';
+      setMessages(prev => [...prev, { role:'assistant', content: reply }]);
+    } catch(e) {
+      setMessages(prev => [...prev, { role:'assistant', content:'Connection error. Please try again.' }]);
+    }
+    setLoading(false);
+  };
+
+  const suggestions = ['What is TON blockchain?','How to check my wallet?','What are Jettons?','How does staking work?'];
+
+  return (
+    <>
+      <button onClick={() => setOpen(!open)}
+        className="fixed bottom-6 right-6 w-13 h-13 w-14 h-14 bg-ton-500 hover:bg-ton-600 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl z-50 transition-all duration-300 hover:scale-110 ring-4 ring-ton-300/30">
+        {open ? '✕' : '🤖'}
+      </button>
+      {open && (
+        <div className="fixed bottom-24 right-6 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden border border-slate-200 dark:border-slate-600 animate-slideUp">
+          <div className="bg-gradient-to-r from-ton-700 to-ton-500 px-4 py-3 flex items-center gap-3">
+            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">💎</div>
+            <div>
+              <p className="text-white font-semibold text-sm">TON AI Assistant</p>
+              <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"/><p className="text-ton-100 text-xs">Online</p></div>
+            </div>
+          </div>
+          <div ref={chatRef} className="chat-scroll p-3 flex flex-col gap-3 min-h-48">
+            {messages.map((m,i) => (
+              <div key={i} className={`flex ${m.role==='user'?'justify-end':'justify-start'}`}>
+                <div className={`max-w-xs rounded-2xl px-3 py-2 text-xs leading-relaxed shadow-sm ${
+                  m.role==='user'
+                    ? 'bg-ton-500 text-white rounded-br-sm'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-sm'
+                }`}>{m.content}</div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-slate-100 dark:bg-slate-700 rounded-2xl rounded-bl-sm px-4 py-2 text-xs">
+                  <span className="wave"><span>.</span><span>.</span><span>.</span></span>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="px-3 pb-2 flex gap-1 flex-wrap">
+            {suggestions.map((q,i) => (
+              <button key={i} onClick={() => setInput(q)}
+                className="text-xs bg-ton-50 dark:bg-slate-700 text-ton-600 dark:text-ton-400 px-2 py-1 rounded-full hover:bg-ton-100 transition-colors border border-ton-200 dark:border-slate-600 leading-tight">
+                {q}
+              </button>
+            ))}
+          </div>
+          <div className="border-t border-slate-200 dark:border-slate-600 p-2 flex gap-2">
+            <input
+              value={input} onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key==='Enter' && send()}
+              placeholder="Ask anything about TON..."
+              className="flex-1 text-xs px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 outline-none focus:border-ton-400 transition-colors"/>
+            <button onClick={send} disabled={loading}
+              className="bg-ton-500 hover:bg-ton-600 disabled:opacity-50 text-white w-8 h-8 rounded-xl flex items-center justify-center text-sm transition-colors flex-shrink-0">➤</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="bg-slate-900 text-slate-400 mt-10">
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">💎</span>
+              <span className="text-white font-bold text-lg">Tonscan</span>
+            </div>
+            <p className="text-xs leading-relaxed">The simplest tool to explore the TON blockchain — transactions, addresses, blocks, jettons and NFTs.</p>
+          </div>
+          {[
+            { title:'Explorer', links:['Transactions','Blocks','Accounts','Validators','Statistics'] },
+            { title:'Tokens', links:['Top Jettons','NFT Collections','DApps','Staking Pools'] },
+            { title:'Developers', links:['API Documentation','GitHub','Address Book','Status Page'] },
+          ].map((col,i) => (
+            <div key={i}>
+              <h4 className="text-white font-semibold text-sm mb-3">{col.title}</h4>
+              <ul className="space-y-2">
+                {col.links.map(l => <li key={l}><a href="#" className="text-xs hover:text-ton-400 transition-colors">› {l}</a></li>)}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-slate-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-2">
+          <p className="text-xs">© 2024 Tonscan — TON Blockchain Explorer. Clone for educational purposes.</p>
+          <div className="flex gap-4 text-xs">
+            <a href="#" className="hover:text-ton-400 transition-colors">Privacy</a>
+            <a href="#" className="hover:text-ton-400 transition-colors">Terms</a>
+            <a href="#" className="hover:text-ton-400 transition-colors">GitHub ↗</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ── Main App ───────────────────────────────────────────
+function App() {
+  const [darkMode, setDarkMode] = useState(true);
+  const [txs, setTxs] = useState(INIT_TXS);
+  const [blocks, setBlocks] = useState(INIT_BLOCKS);
+  const [search, setSearch] = useState('');
+  const [searchResult, setSearchResult] = useState('');
+  const [tab, setTab] = useState('txs');
+
+  // Live updates
+  useEffect(() => {
+    const iv = setInterval(() => {
+      const newTx = makeTx();
+      setTxs(prev => [newTx, ...prev.slice(0,9)]);
+      if (Math.random() > 0.6) {
+        const newBlock = makeBlock();
+        newBlock.seqno = blocks[0]?.seqno ? blocks[0].seqno + 1 : 37500000;
+        setBlocks(prev => [newBlock, ...prev.slice(0,7)]);
+      }
+    }, 3000);
+    return () => clearInterval(iv);
+  }, [blocks]);
+
+  const handleSearch = () => {
+    if (search.trim()) setSearchResult(search.trim());
+  };
+
+  return (
+    <div className={darkMode ? 'dark' : ''}>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+        <TopBar darkMode={darkMode} setDarkMode={setDarkMode}/>
+        <Header search={search} setSearch={setSearch} onSearch={handleSearch}/>
+        <Navbar/>
+
+        <main className="max-w-7xl mx-auto px-4 py-6">
+          <NetworkStats/>
+
+          {/* Tabs */}
+          <div className="flex gap-2 mb-4 border-b border-slate-200 dark:border-slate-700/50">
+            {[['txs','🔄 Transactions'],['blocks','📦 Blocks'],['jettons','🪙 Jettons']].map(([key,label]) => (
+              <button key={key} onClick={() => setTab(key)}
+                className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-all -mb-px ${tab===key ? 'border-ton-500 text-ton-600 dark:text-ton-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {tab === 'txs' && <LatestTransactions txs={txs}/>}
+          {tab === 'blocks' && <LatestBlocks blocks={blocks}/>}
+          {tab === 'jettons' && <JettonTable/>}
+
+          {/* Bottom two columns */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <LatestBlocks blocks={blocks.slice(0,5)}/>
+            <JettonTable/>
+          </div>
+        </main>
+
+        <Footer/>
+        <AIChatbot/>
+        {searchResult && <SearchResult query={searchResult} onClose={() => setSearchResult('')}/>}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
